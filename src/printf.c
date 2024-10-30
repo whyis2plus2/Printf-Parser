@@ -7,7 +7,6 @@ typedef struct FormatData {
 	bool leftAlign: 1; /* - */
 	bool visibleSign: 1; /* + */
 	bool prependZero: 1; /* 0 */
-	bool sepThousands: 1; /* ' */
 	bool altForm: 1; /* # */
 	unsigned int width, precision;
 } FormatData;
@@ -173,7 +172,7 @@ static int WriteString(
 {
 	int i;
 
-	if (!x) x = "<null>"
+	if (!x) x = "<null>";
 
 	/* iterate over every char in the string */
 	for (i = 0; x[i] && i < fmt.precision; ++i) {
