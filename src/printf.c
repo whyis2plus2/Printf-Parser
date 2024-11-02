@@ -28,7 +28,7 @@ static bool WriteChar(char *buff, int buffsz, int index, char x);
 
 /* write x to the buffer if the buffer has enough room,
  * written copy of x gets truncated if there isn't enough room
- * this function returns the length of x */
+ * this function returns the length of x + any padding */
 static int WriteString(
 	char *buff, int buffsz,
 	int startIndex, const char *x,
@@ -68,7 +68,7 @@ static int SLongToASCII(char buffer[65], long x, int radix, bool upper)
 	for (i = 0; i < buffsz; ++i) {
 		int digit = x % radix;
 
-		/* force digit to be a positive number if something wrong happens */
+		/* force digit to be a positive number so that it can be converted to the right char */
 		if (digit < 0) digit = -digit;
 		
 		digit += (digit < 10)? '0' : 'a' - 10;
@@ -163,20 +163,38 @@ static bool WriteChar(char *buff, int buffsz, int index, char x)
 
 /* write x to the buffer, if the buffer has enough room, written copy of x gets */
 /* truncated if there isn't enough room */
-/* this function returns the length of x */
+/* this function returns the length of x + any padding */
 static int WriteString(
 	char *buff, int buffsz,
 	int startIndex, const char *x,
 	FormatData fmt
 )
 {
-	int i;
+	int i = 0;
+	int ret = 0;
+	int xLen = 0;
+	bool needsPadding = fmt.width > xLen;
 
 	if (!x) x = "<null>";
+	xLen = strlen(x);
+
+	/* pad so that the width is met */			
+	if (needsPadding && !fmt.leftAlign) for (i = 0; i < fmt.width - xLen; ++i) {
+		WriteChar(buff, buffsz, startIndex + i, fmt.prependZero? '0': ' ');
+	}
+
+	ret = xLen + i;
 
 	/* iterate over every char in the string */
 	for (i = 0; x[i] && i < fmt.precision; ++i) {
-		WriteChar(buff, buffsz, startIndex + i, x[i]);	
+		WriteChar(
+			buff,
+			buffsz, 
+			startIndex + i + (needsPadding && !fmt.leftAlign)
+				?fmt.width - xLen
+				:0,
+			x[i]
+		);
 	}
 
 	return i;

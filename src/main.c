@@ -3,6 +3,6 @@
 
 int main(void)
 {
-	printf("Hello, world!\n");
+	printf("%0-6.4sa\n", "tests");
 	return 0;
 }
