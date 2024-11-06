@@ -1,6 +1,7 @@
 #include "printf.h"
 
-#include <string.h> /* strlen */
+#include <malloc.h> /* calloc, free */
+#include <string.h> /* strlen, memcpy */
 
 /* A struct that holds all formatting data for one format specifier */
 typedef struct FormatData {
@@ -8,8 +9,57 @@ typedef struct FormatData {
 	bool visibleSign: 1; /* + */
 	bool prependZero: 1; /* 0 */
 	bool altForm: 1; /* # */
-	unsigned int width, precision;
+	int width, precision;
 } FormatData;
+
+/* pad a string with a specific char,
+ * this function left pads the string if the count is negative,
+ * right pads if it's positive,
+ * this does create a separate allocation from the original string,
+ * this allocation is on the heap.
+ * string length can be gotten by passing a non-null pointer to
+ * len, if the value passed to len is null, then the len is not output */
+static char *StrPad(int *len, const char *str, char c, int count)
+{
+	int outLen = 0;
+	char *outStr = NULL;
+	const bool leftpad = count < 0;
+	int i;
+
+	if (!str) str = "";
+	else outLen = strlen(str);
+
+	/* it's actually better to force the count to be negative because
+	 * negative INT_MAX is a valid int (assuming 2's compliment) 
+	 * but negative INT_MIN (which is a positive number) doesn't
+	 * fit in an int (again, assuming 2's compliment) */
+	count = (count > 0)? -count : count;
+
+	outStr = calloc(sizeof(char), outLen - count + 1 /* null byte */);
+	if (!outStr) {
+		if (len) *len = 0;
+		return NULL;
+	}
+
+	for (i = 0; i > count; --i) {
+		if (leftpad) {
+			outStr[-i] = c;
+			continue;
+		}
+
+		outStr[-i + outLen] = c;
+	}
+
+	if (leftpad) memcpy(outStr - i, str, outLen);
+	else memcpy(outStr, str, outLen);
+
+	outLen -= i;
+	if (len) *len = outLen;
+
+	return outStr;
+}
+
+static char *TruncateStr(bool alloc, char *str, int len);
 
 /* Convert a signed long to an ascii string stored in the buffer
  * this function returns the length of the resulting string

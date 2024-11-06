@@ -4,7 +4,7 @@ LD := gcc
 CCFLAGS :=
 CCFLAGS += -ansi -pedantic-errors
 CCFLAGS += -Wall -Wextra -Iinclude
-CCFLAGS += -c 
+CCFLAGS += -c -ggdb 
 
 LDFLAGS := 
 
